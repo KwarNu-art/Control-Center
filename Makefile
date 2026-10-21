@@ -1,19 +1,14 @@
-TARGET := iphone:clang:latest:14.0  
-ARCHS := arm64  
-  
-# Support both Rootless and Rootful compilation modes  
-THEOS_PACKAGE_SCHEME ?= rootless  
-  
-include $(THEOS)/makefiles/common.mk  
-  
-TWEAK_NAME = ControlCenter  
-  
-ControlCenter_FILES = Tweak.x IOS26GlassView.m IOS26SliderView.m IOS26ModuleMorpher.m  
-ControlCenter_CFLAGS = -fobjc-arc -Wno-deprecated-declarations -I./Headers  
-ControlCenter_FRAMEWORKS = UIKit CoreGraphics QuartzCore AudioToolbox  
-ControlCenter_PRIVATE_FRAMEWORKS = ControlCenterUI ControlCenterUIKit MediaRemote  
-  
-include $(THEOS_MAKE_PATH)/tweak.mk  
-  
-after-install::  
-    install.exec "killall -9 SpringBoard"
+export TARGET = iphone:clang:latest:14.0
+export ARCHS = arm64
+
+INSTALL_TARGET_PROCESSES = SpringBoard
+
+include $(THEOS)/makefiles/common.mk
+
+TWEAK_NAME = ControlCenter26
+
+ControlCenter26_FILES = Tweak.x
+ControlCenter26_CFLAGS = -fobjc-arc -Wno-deprecated-declarations -Wno-unused-function -Wno-unused-variable
+ControlCenter26_FRAMEWORKS = UIKit QuartzCore
+
+include $(THEOS_MAKE_PATH)/tweak.mk

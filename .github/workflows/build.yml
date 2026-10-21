@@ -1,47 +1,71 @@
-name: Build Control-Center Tweak  
-  
-on:  
-  push:  
-    branches: [ main, master ]  
-  pull_request:  
-    branches: [ main, master ]  
-  workflow_dispatch:  
-  
-jobs:  
-  build:  
-    runs-on: macos-13  
-  
-    steps:  
-      - name: Checkout Source Code  
-        uses: actions/checkout@v4  
-  
-      - name: Install Theos Dependencies  
-        run: |  
-          brew install ldid xz make  
-          echo "THEOS=~/theos" >> $GITHUB_ENV  
-  
-      - name: Setup Theos Toolchain & SDK  
-        run: |  
-          git clone --recursive https://github.com/theos/theos.git ~/theos  
-          git clone --depth 1 https://github.com/theos/sdks.git ~/theos/sdks  
-          curl -LO https://github.com/theos/sdks/releases/latest/download/iPhoneOS14.5.sdk.tar.xz  
-          tar -xf iPhoneOS14.5.sdk.tar.xz -C ~/theos/sdks/  
-          rm iPhoneOS14.5.sdk.tar.xz  
-  
-      - name: Compile Rootless .deb Package (Dopamine / Palera1n)  
-        run: |  
-          export THEOS_PACKAGE_SCHEME=rootless  
-          make clean  
-          make package FINALPACKAGE=1  
-  
-      - name: Compile Rootful .deb Package (Checkra1n / Unc0ver)  
-        run: |  
-          export THEOS_PACKAGE_SCHEME=rootful  
-          make clean  
-          make package FINALPACKAGE=1  
-  
-      - name: Upload Debian Packages to Artifacts  
-        uses: actions/upload-artifact@v4  
-        with:  
-          name: Control-Center-iOS26-Packages  
-          path: packages/*.deb
+name: Build Control Center 26
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install build tools
+        shell: bash
+        run: |
+          brew install ldid dpkg
+          echo "$(brew --prefix)/bin" >> "$GITHUB_PATH"
+
+      - name: Install Theos and SDKs
+        shell: bash
+        run: |
+          THEOS_DIR="${RUNNER_TEMP}/theos"
+          git clone --recursive --depth=1 https://github.com/theos/theos.git "$THEOS_DIR"
+          rm -rf "$THEOS_DIR/sdks"
+          git clone --depth=1 https://github.com/theos/sdks.git "$THEOS_DIR/sdks"
+          echo "THEOS=$THEOS_DIR" >> "$GITHUB_ENV"
+
+      - name: Build rootful package (checkra1n / unc0ver / Odyssey)
+        shell: bash
+        run: |
+          make clean || true
+          make package FINALPACKAGE=1
+
+      - name: Build rootless package (Dopamine / palera1n rootless)
+        shell: bash
+        run: |
+          make clean || true
+          make package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless
+
+      - name: Collect packages
+        shell: bash
+        run: |
+          mkdir -p output_deb
+          find packages -name "*.deb" -exec cp {} output_deb/ \;
+          ls -la output_deb/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ControlCenter26-deb
+          path: output_deb/*.deb
+          if-no-files-found: error
+
+      - name: Read version
+        id: ver
+        shell: bash
+        run: echo "version=$(grep '^Version:' control | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+
+      - name: Publish release
+        if: github.event_name == 'push'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.ver.outputs.version }}
+          name: Control Center 26 ${{ steps.ver.outputs.version }}
+          body: |
+            iOS 26 style liquid glass Control Center. `iphoneos-arm` is for rootful jailbreaks, `iphoneos-arm64` for rootless (Dopamine, palera1n rootless). Install with Sileo, Zebra or Filza, then respring.
+          files: output_deb/*.deb

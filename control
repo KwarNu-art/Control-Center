@@ -1,9 +1,10 @@
-Package: com.concept.ios26controlcenter  
-Name: Control-Center (iOS 26 Concept)  
-Depends: mobilesubstrate, preferenceloader, firmware (>= 14.0)  
-Version: 1.0.0  
-Architecture: iphoneos-arm  
-Description: Complete futuristic iOS 26 redesign for Control Center on iPhone 7 Plus.  
-Maintainer: Developer  
-Author: Developer  
+Package: com.kwarnu.controlcenter26
+Name: Control Center 26
+Version: 1.1.0
+Architecture: iphoneos-arm
+Description: iOS 26 style liquid glass Control Center for iOS 14 to 16. Light, no timers, no extra blur.
+Maintainer: KwarNu <kwarnu64@gmail.com>
+Author: KwarNu
 Section: Tweaks
+Depends: mobilesubstrate, firmware (>= 14.0)
+Icon: https://raw.githubusercontent.com/KwarNu-art/Control-Center/main/assets/icon.png
